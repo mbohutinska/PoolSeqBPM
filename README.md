@@ -32,8 +32,16 @@ write.table(x = tot,file = paste("AF/",p,"_AF.txt",sep=""),quote = F, row.names 
 You don't need to use this pre-processing script, just note that input for downstream scripts has 4 columns: pop name, scaffold, position and allele frequency (calculated as the average AF of all the pools; the AF in individual pools should be calculated as the fraction of total number of reads supporting the alternative allele).
 
 ## 1. combine per-population files with allele frequency together
+```
 sort -k2,2 -k3,3n -m CEZ_AF.txt PIC_AF.txt > CEZPIC.concat.txt
-
+```
 ## 2. run the script
+```
 python3 bpm_PoolSeq.py -i CEZPIC.concat.txt -o ./ -prefix CEZPIC_WS1_MS1 -ws 1 -ms 1 -np 2
-
+```
+-i: input file generated in step 1.
+-o: output directory
+-prefix: name of the output file
+-ws: window size in bp (i.e. 1000bp)
+-ms: minimum number of SNPs required per window (i.e. 50)
+-np: number of populations: 2
