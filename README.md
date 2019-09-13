@@ -1,6 +1,8 @@
 # PoolSeqBPM
 Scripts to calculate between-population genetic metrics from PoolSeq data
+
 Author: M. Bohutinska
+
 Scripts partly taken from P. Monnahans pipeline: https://github.com/pmonnahan/ScanTools
 
 ## 0.
