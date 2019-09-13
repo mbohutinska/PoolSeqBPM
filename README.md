@@ -40,8 +40,15 @@ sort -k2,2 -k3,3n -m CEZ_AF.txt PIC_AF.txt > CEZPIC.concat.txt
 python3 bpm_PoolSeq.py -i CEZPIC.concat.txt -o ./ -prefix CEZPIC_WS1_MS1 -ws 1 -ms 1 -np 2
 ```
 -i: input file generated in step 1.
+
 -o: output directory
+
 -prefix: name of the output file
+
 -ws: window size in bp (i.e. 1000bp)
+
 -ms: minimum number of SNPs required per window (i.e. 50)
+
 -np: number of populations: 2
+
+**Output: outname	scaff	start	end	win_size	num_snps	AFD	FixedDiff	FstN (Nei, 1987)
