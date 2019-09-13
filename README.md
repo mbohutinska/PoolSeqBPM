@@ -5,8 +5,7 @@ Author: M. Bohutinska
 
 Scripts partly taken from P. Monnahans pipeline: https://github.com/pmonnahan/ScanTools
 
-## 0.
-### before start: prepare data in R
+## 0. before start: prepare data in R
 ```
 setwd("/home/aa/Desktop/pracovni/cAmara/")
 library(data.table)
