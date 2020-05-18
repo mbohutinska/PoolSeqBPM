@@ -1,5 +1,5 @@
 # PoolSeqBPM
-Scripts to calculate between-population genetic metrics from PoolSeq data
+Scripts to calculate between-population genetic metrics from PoolSeq data and post-process the Fst-based selection scans as used  in Bohutinska et al. 2020 https://doi.org/10.1101/2020.01.31.929109
 
 Author: M. Bohutinska
 
