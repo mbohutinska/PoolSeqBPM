@@ -52,3 +52,7 @@ python3 bpm_PoolSeq.py -i CEZPIC.concat.txt -o ./ -prefix CEZPIC_WS1_MS1 -ws 1 -
 -np: number of populations: 2
 
 **Output: outname	scaff	start	end	win_size	num_snps	AFD	FixedDiff	FstN (Nei, 1987)
+
+
+## 3. post-process
+quartetScan.r summarises all scripts used to postprocess the Fst-based selection scans used in Bohutinska et al. 2020 https://doi.org/10.1101/2020.01.31.929109
