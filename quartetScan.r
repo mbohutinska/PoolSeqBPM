@@ -119,7 +119,7 @@ a$out_n1[a$n1_Fst > n1] <- 1
 a$out_n2<-0
 a$out_n2[a$n2_Fst > n2] <- 1
 #Add annotation
-cds<-fread("/home/aa/Desktop/pracovni/cAmara/gene-annotFile_MajdaModif.txt",h=T)
+cds<-fread("/home/aa/Desktop/pracovni/cAmara/old/gene-annotFile_MajdaModif.txt",h=T)
 setkey(cds, scaff, start, end)
 aaa<-foverlaps(a, cds, type="any")
 aaa$start[is.na(aaa$start)]<-99
@@ -137,10 +137,11 @@ a$genic<-aa$genic
 #   b1<-subset(b,b$out_n1 %in% 0 & b$out_n2 %in% 0)
 a1<-subset(a,a$out_n1 %in% 0 & a$out_n2 %in% 0)
 o1<-a1[1:(nrow(a1)*0.01),]
-pdf(paste("genicVsFst_",region,".pdf",sep=""),width = 12,height = 8)
-plot(a1$genic,a1$p1_Fst,ylab = "Fst",xlab="genoc space within 1000 bp window")
+pdf(paste("/home/aa/Desktop/pracovni/cAmara/genicVsFst_",region,".pdf",sep=""),width = 8,height = 6,pointsize = 14)
+plot(a1$genic,a1$p1_Fst,ylab = "Fst",xlab="Genic space within 1000 bp window")
 abline(h = min(o1$p1_Fst))
 dev.off()
+cor.test(a1$genic,a1$p1_Fst,use = "complete.obs")
 write.table(a,paste("Summary_rankFst",region,".txt",sep=""),quote=F,row.names = F,sep="\t")
 #overlap with genes
 o2<-foverlaps(o1, cds, type="any")
@@ -691,7 +692,7 @@ dev.off()
 
 #############OVERLAP WITH ARENOSA #######################
 library(data.table)
-#aa<-read.table("/home/aa/JICAutumn2016/finalAnalysis29Apr/results/posSelection/tetraploid/all_dip_tet_0.99_overlaps#GF.txt",h=T)
+#aa<-read.table("/home/aa/JICAutumn2016/finalAnalysis29Apr/results/posSelection/tetraploid/all_dip_tet_0.99_overlapsGF.txt",h=T)
 #ab<-as.data.frame(table(aa$ALcode))
 #ab<-subset(ab,ab$Freq > 1)
 #ann<-fread("/home/aa/Desktop/references/lyrataV2/LyV2_TAIR11orth_des_20181231.txt",h=T,quote="")
@@ -747,13 +748,15 @@ names(int.genes) = all.genes
   resultsFc <- runTest(go.obj, algorithm = "classic", statistic = "fisher")
   
   allRes <- GenTable(go.obj, classicFisher = resultsFc, elimFisher = resultsFe, orderBy = "classicFisher", ranksOf = "classicFisher", topNodes = 100)
-  allRes <- GenTable(go.obj, classicFisher = resultsFc, elimFisher = resultsFe, orderBy = "elimFisher", ranksOf = "elimFisher", topNodes = 100)
+  allRes <- GenTable(go.obj, classicFisher = resultsFc, elimFisher = resultsFe, orderBy = "elimFisher", ranksOf = "elimFisher", topNodes = 150)
   
   
   a<-subset(allRes, allRes$Annotated>=5  & as.numeric(allRes$elimFisher) <=0.05) #& allRes$Annotated<=200
+  a<-subset(allRes, allRes$Annotated>=5  & as.numeric(allRes$classicFisher) <=0.05)
+  
   #pdf(paste(lin,"/graph",lin,".pdf",sep=""),width = 14,height = 14)
   #showSigOfNodes(go.obj, score(resultsFe), firstSigNodes = 5, useInfo = 'all')
-  write.table(file=paste("genes_genic_topgo_arenosa150.V2.txt",sep=""),a,sep="\t",row.names=F)
+  write.table(file=paste("genes_genic_topgo_arenosa150.V2.classic.txt",sep=""),a,sep="\t",row.names=F)
   #dev.off()
 
   
@@ -764,25 +767,86 @@ names(int.genes) = all.genes
   write.table(file=paste("genes_amara.txt",sep=""),sel,sep="\t",row.names=F)
   aaa<-subset(s,substr(at,1,9) %in% substr(aa$AT,1,9))
   
-  a<-read.table("genes_genic_topgo_arenosa50_classic.txt",h=T)
-  c<-read.table("genes_genic_topgo_amara50_classic.txt",h=T)
+  a<-read.table("genes_genic_topgo_arenosa150.V2.classic.txt",h=T)
+  c<-read.table("genes_genic_topgo_amara150.V2.classic.txt",h=T)
   v<-venn.diagram(x=list("C.amara"=c$GO.ID,"A.arenosa"=a$GO.ID),paste("arenosaAmaraGOs.tiff",sep=""),fill = c("gold","forestgreen"), lty = "blank",alpha=0.3 , main = "Candidate GOs")
   aa<-subset(a,GO.ID %in% c$GO.ID)
   
   a<-read.table("genes_genic_topgo_arenosa150.V2.txt",h=T)
   c<-read.table("genes_genic_topgo_amara150.txt",h=T)
  par<- subset(c,c$GO.ID%in%a$GO.ID)
+ par$Significant/par$Expected 
+ par<- subset(a,a$GO.ID%in%c$GO.ID)
+ par$Significant/par$Expected 
+ 
+ 
+ ### opverlap Fst-fineMAV - genes, GOs
+ #arenosa
+ library(data.table)
+ a<-read.table("/home/aa/JICAutumn2016/finalAnalysis29Apr/results/posSelection/tetraploid/all_dip_tet_0.99_overlapsGF.txt",h=T)
+ c<-fread("/home/aa/Desktop/references/lyrataV2/functions/ALATdict.txt")
+ fmv<-subset(c,c$AL %in% a$ALcode)
+ fmv<-as.data.frame(table(substr(fmv$AT,1,9)))
+ fst<-read.table("/home/aa/Desktop/pracovni/cAmara/arenosaCandList8Jan.txt",col.names = c("Var1"))
+ fst$Freq<-"1"
+ parallel<-as.data.frame(rbind(fmv,fst))
+ parallel1<-parallel[order(parallel[,1]), ]
+ aa<-parallel1[duplicated(parallel1[,c('Var1')]),] 
+ #amara
+  ca<-read.table("file:///home/aa/Desktop/pracovni/cAmara/229Candidates_inclATcodes_fineMAV.txt",h=T)
+  ca<-subset(ca,ca$mav>0)
+  ca$AT<-substr(ca$AT,1,9)
+  ###overlap
+  parallel<- subset(ca,ca$AT %in% aa$Var1)
+  parallel<- subset(aa,aa$Var1  %in% ca$AT)
   
   
+ #Do the GO
+  setwd("/home/aa/Desktop/pracovni/cAmara/")
+  library("biomaRt")
+  library(topGO)
+  mart <- biomaRt::useMart(biomart = "plants_mart",dataset = "athaliana_eg_gene", host = 'plants.ensembl.org')
+  # Get ensembl gene ids and GO terms
+  GTOGO <- biomaRt::getBM(attributes = c( "ensembl_gene_id", "go_id"), mart = mart)
+  GTOGO <- GTOGO[GTOGO$go_id != '',]
+  geneID2GO <- by(GTOGO$go_id,GTOGO$ensembl_gene_id,function(x) as.character(x))
+  all.genes <- sort(unique(as.character(GTOGO$ensembl_gene_id)))
   
+  #amara
+  sel<-substr(ca$AT,1,9)
+  #arenosa
+  sel<-aa$Var1
+  
+  int.genes <- factor(as.integer(all.genes %in% sel))
+  names(int.genes) = all.genes
+  go.obj <- new("topGOdata", ontology='BP', allGenes = int.genes, annot = annFUN.gene2GO, gene2GO = geneID2GO,nodeSize=150) ## 
+  resultsFe <- runTest(go.obj, algorithm = "elim", statistic = "fisher") 
+  resultsFc <- runTest(go.obj, algorithm = "classic", statistic = "fisher")
+  allRes <- GenTable(go.obj, classicFisher = resultsFc, elimFisher = resultsFe, orderBy = "elimFisher", ranksOf = "elimFisher", topNodes = 100)
+  a<-subset(allRes, allRes$Annotated>=5  & as.numeric(allRes$elimFisher) <=0.05) 
+  write.table(file=paste("genes_genic_topgo_arenosa150.FineMAVFst.txt",sep=""),a,sep="\t",row.names=F)
+
+  a<-read.table("genes_genic_topgo_arenosa150.FineMAVFst.txt",h=T)
+  c<-read.table("genes_genic_topgo_amara150.FineMAVFst.txt",h=T)
+  par<- subset(c,c$GO.ID%in%a$GO.ID)
+  par$Significant/par$Expected 
+  par<- subset(a,a$GO.ID%in%c$GO.ID)
+  par$Significant/par$Expected 
+
+ 
+ 
   ####Signif. parallelism
  ##genes
- fisher.test(matrix(c(20000-6-229-452, 229-6, 452-6, 6), nrow=2), alternative="greater")
+ fisher.test(matrix(c(20000-229-452-6, 229-6, 452-6, 6), nrow=2), alternative="greater")
+ ##genes fineMAV-Fst
+ fisher.test(matrix(c(20000-120-303-3, 120-3, 303-3, 3), nrow=2), alternative="greater")
+ 
  
  ##GO
  fisher.test(matrix(c(6000-4-156-78, 78-4, 156-4, 4), nrow=2), alternative="greater")
  fisher.test(matrix(c(6000-5-73-22, 22-5, 73-5, 5), nrow=2), alternative="greater")
- 
+ ##GO fineMAV-Fst
+ fisher.test(matrix(c(6000-2-57-16, 16, 57, 2), nrow=2), alternative="greater")
  
  
   p<- matrix(c(8, 794, 0, 10000), nrow = 2, dimnames = list(c("p", "no_p"), c("candidates", "no_candidates")))
@@ -1071,3 +1135,91 @@ aa<-subset(aa,!aa$AT %in% "nnn")
 aa<-aa[!duplicated(aa[,2]),] 
 write.table(aa,"candGenesATorthologs_arenosa_FstN_1kbwindows.txt", row.names = F,quote = F,sep="\t")
 write.table(tts,"candGenesWindowInfo_arenosa_FstN_1kbwindows.txt", row.names = F,quote = F,sep="\t")
+
+
+
+### Cytology
+library(ggpubr)
+setwd("/home/aa/Desktop/pracovni/cAmara/cytology/")
+#rather
+a<-read.table("/home/aa/Desktop/pracovni/cAmara/cytology/cytology.txt",h=T)
+a$prop<-a$rStable/(a$rStable+a$rUnstable)
+novT <- cbind("T",a$prop[8:14])
+novD <- cbind("D",a$prop[1:7])
+all<-as.data.frame(rbind(novD,novT))
+
+all$V2<-as.numeric(as.character(all$V2))
+my_comparisons <- list( c("D", "T") )
+pdf("rather.pdf",width = 4,height = 4,pointsize = 24)
+
+ggviolin(all, x = "V1", y = "V2", fill = "V1",
+         palette = c("red", "blue"),
+         add = "boxplot", add.params = list(fill = "white")) +
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif") + 
+  stat_compare_means(label.y = 1.5)
+dev.off()
+
+#stable
+a$propS<-a$stable/(a$stable+a$unstable)
+novT <- cbind("T",a$propS[8:14])
+novD <- cbind("D",a$propS[1:7])
+all<-as.data.frame(rbind(novD,novT))
+
+all$V2<-as.numeric(as.character(all$V2))
+my_comparisons <- list( c("D", "T") )
+pdf("stable.pdf",width = 4,height = 4,pointsize = 24)
+
+ggviolin(all, x = "V1", y = "V2", fill = "V1",
+         palette = c("red", "blue"),
+         add = "boxplot", add.params = list(fill = "white")) +
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif") + 
+  stat_compare_means(label.y = 1.5)
+dev.off()
+
+
+#rather
+y<-matrix(c(sum(a$rStable[1:7]),sum(a$rStable[8:14]),sum(a$rUnstable[1:7]), sum(a$rUnstable[8:14])), nrow=2)
+type<-c("diploid","tetraploid")
+glm.0<-glm(y~1, family=binomial)
+glm.1<-glm(y~type, family=binomial)
+anova(glm.0,glm.1,test="Chisq")
+a$p/(a$p+a$np)
+
+#rather
+y<-matrix(c(sum(a$stable[1:7]),sum(a$stable[8:14]),sum(a$unstable[1:7]), sum(a$unstable[8:14])), nrow=2)
+type<-c("diploid","tetraploid")
+glm.0<-glm(y~1, family=binomial)
+glm.1<-glm(y~type, family=binomial)
+anova(glm.0,glm.1,test="Chisq")
+a$p/(a$p+a$np)
+
+
+#################   treemix  ######################
+setwd("/home/aa/Desktop/pracovni/cAmara/")
+library(data.table)
+pops<-c("PIC","LUZ","VKR") #"CEZ",
+for (p in pops) { # p="CEZ"
+  a<-read.table(paste("AF/",p,"_AO.txt",sep=""),h=F)
+  r<-read.table(paste("AF/",p,"_RO.txt",sep=""),h=F)
+  i<-read.table(paste("AF/scaffold_position.txt",sep=""),h=F)
+  all<-cbind(i,a,r)
+  colnames(all)<-c('scaff','pos','a1','a2','a3','r1','r2','r3')
+  all<-subset(all,!all$a1 %like% ',')
+all$a1<-as.numeric(as.character(all$a1))
+all$a2<-as.numeric(as.character(all$a2))
+all$a3<-as.numeric(as.character(all$a3))
+
+  ac<-all[,3:5]
+  all$ac<-apply(ac,1,mean)
+  an<-all[,6:8]
+  all$an<-apply(an,1,mean)
+
+  #this will change
+  #t$scaff<-paste("scaffold_1")
+  #t$pos<-1:nrow(t)
+  tot<-cbind(as.character(all$scaff),all$pos,round(all$ac),round(all$ac+all$an))
+  tot<-tot[complete.cases(tot), ]
+  write.table(x = tot,file = paste("AF/",p,"_tm.table.txt",sep=""),quote = F, row.names = F,col.names = F,sep = "\t")
+}
+
+  
