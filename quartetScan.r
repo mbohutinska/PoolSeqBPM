@@ -1222,4 +1222,105 @@ all$a3<-as.numeric(as.character(all$a3))
   write.table(x = tot,file = paste("AF/",p,"_tm.table.txt",sep=""),quote = F, row.names = F,col.names = F,sep = "\t")
 }
 
+
+
+### TRIOS
+
+### RANK THE SNPs - 4 pops ###
+setwd("/home/aa/Desktop/pracovni/cAmara/AF/")
+library(data.table)
+region<-"cAmara"
+a<-fread(paste("QuartetSummarySNPs",region,".txt",sep=''))
+a$luz<-(a$p1_Fst+a$p3_Fst)/2
+a$vkr<-(a$p2_Fst+a$p4_Fst)/2
+
+a<-a[order(a$luz,decreasing = T),]
+a$rank_p1<-seq(1,nrow(a),1)
+a<-a[order(a$vkr,decreasing = T),]
+a$rank_p2<-seq(1,nrow(a),1)
+a$sumRank<-a$rank_p1+a$rank_p2
+a<-a[order(a$sumRank,decreasing = F),]
+n2<-quantile(a$n2_Fst,0.99,na.rm = T)
+a$out_n2<-0
+a$out_n2[a$n2_Fst > n2] <- 1
+#Add annotation
+cds<-fread("/home/aa/Desktop/pracovni/cAmara/old/gene-annotFile_MajdaModif.txt",h=T)
+setkey(cds, scaff, start, end)
+a1<-subset(a,a$out_n2 %in% 0)
+o1<-a1[1:(nrow(a1)*0.01),]
+write.table(a,paste("Summary_rankFstSNPsTRIO",region,".txt",sep=""),quote=F,row.names = F,sep="\t")
+o2<-foverlaps(o1, cds, type="any")
+o3<-unique(o2$gene)
+write.table(o3,paste("out_1percent_IDs_TRIO",region,".txt",sep=''),quote=F,row.names = F,sep="\t")
+write.table(o2,paste("out1percent_negOut_moreThan20SNPs_annotatedTRIO",region,".txt",sep=''),quote=F,row.names = F,sep="\t")
+
+
+
+
+
+pdf("/home/aa/Desktop/amaraSubmisions/MBE/trio.pdf",width = 4,height = 8.5)
+par(mfrow=c(2,1))
+plot(a1$luz~a1$vkr,ylab = "Fst (tetraploids - LUZ)",xlab = "Fst (tetraploids - VKR)",main="Genome, r = 0.44")
+plot(o1$luz~o1$vkr,ylab = "Fst (tetraploids - LUZ)",xlab = "Fst (tetraploids - VKR)",main="1% outliers, r = 0.61")
+dev.off()
+
+cor.test(o1$luz,o1$vkr)
+cor.test(a1$luz,a1$vkr)
+
+### OVERLAP WITH PIRITAS FINEMAV ###
+fm<-fread("/home/aa/Desktop/pracovni/cAmara/annotationSummary_PiritaMAV_3.5.sorted.txt",h=F)
+fm$scaff<-paste("scaffold_",fm$V1,sep="")
+fm$start<-fm$V5
+fm$end<-fm$V5
+o1$start<-o1$end
+setkey(fm, scaff, start, end)
+o2<-foverlaps(o1, fm, type="any")
+o3<-o2[complete.cases(o2[ , 2]),]
+o3$one<-1
+o4<-setDT(o3)[,list(perGene=sum(one)),by=list(Category=V6)]
+o5<-subset(o4,o4$perGene>1)
+o6<-subset(o4,o4$perGene>=3)
+
+write.table(o3,paste("SNPs_Fst_MAV_Outliers_SortedByFst",region,".txt",sep=''),quote=F,row.names = F,sep="\t")
+write.table(o6,paste("topGenes3more_Fst_MAV_overlap",region,".txt",sep=''),quote=F,row.names = F,sep="\t")
+write.table(o4,paste("topGenes1more_Fst_MAV_overlap",region,".txt",sep=''),quote=F,row.names = F,sep="\t")
+
+
+### VennDiagram ###
+library(VennDiagram)
+fm$x<-paste(fm$scaff, fm$start,sep='.')
+o1$x<-paste(o1$scaff, o1$start,sep='.')
+
+ca<-read.table("/home/aa/Desktop/pracovni/cAmara/candidatesFinal.txt",h=T)
+
+
+#SNPs
+
+v<-venn.diagram(x=list("trio"=o3[2:221],"quartet"=substr(ca$ca,3,16)),paste("/home/aa/Desktop/amaraSubmisions/MBE/trioQuartet_cAmara.tiff",sep=""),fill = c("gold","forestgreen"), lty = "blank",alpha=0.3 , cex=0.7, cat.cex=0.6,main = "Candidate genes",height = 2000,width = 2000)
+
+colnames(ca)<-c("amara","at")
+
+o4<-subset(ca,substr(ca$amara,3,16) %in% o3[2:221])
+library(data.table)
+#aa<-read.table("/home/aa/JICAutumn2016/finalAnalysis29Apr/results/posSelection/tetraploid/all_dip_tet_0.99_overlapsGF.txt",h=T)
+#ab<-as.data.frame(table(aa$ALcode))
+#ab<-subset(ab,ab$Freq > 1)
+#ann<-fread("/home/aa/Desktop/references/lyrataV2/LyV2_TAIR11orth_des_20181231.txt",h=T,quote="")
+#aa<-subset(ann, ann$AL %in% ab$Var1)
+#aa<-subset(aa,!aa$AT %in% "nnn")
+#aa<-aa[!duplicated(aa[,2]),] 
+#write.table(aa,"arenosa_2more_FG.txt", row.names = F,quote = F)
+
+aa<-fread("/home/aa/Desktop/pracovni/cAmara/candGenesATorthologs_arenosa_FstN_1kbwindows.txt",sep="\t",h=T)
+ca<-read.table("/home/aa/Desktop/pracovni/cAmara/candidatesFinal.txt",h=T)
+ca<-o4
+
+par1<-subset(ca,substr(at,1,9) %in% substr(aa$AT,1,9))
+par2<-subset(aa, substr(aa$AT,1,9) %in% substr(ca$at,1,9))
+par1<-par1[ order(par1[,2]), ]
+par2<-par2[ order(par2[,2]), ]
+
+par<-cbind(par1, par2)
+fisher.test(matrix(c(20000-220-452-6, 220-6, 452-6, 6), nrow=2), alternative="greater")
+
   
